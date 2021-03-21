@@ -2,7 +2,7 @@ const axios = require('axios').default;
 const cheerio = require('cheerio');
 const fs = require('fs');
 
-let visited = [];
+let visited = new Map();
 let URL = [];
 let link = ['http://www.tut.by/'];
 URL.push('http://www.tut.by/');
@@ -25,12 +25,11 @@ async function parse(url) {
         if ($(this).attr('data-url-2') != null)
             link.push([$(this).attr('data-url-2')]);
     });
-    let template = new RegExp('^((ftp|http|https):\\/\\/)www.*.tut.*');
+    let template = new RegExp('^((ftp|http|https):\\/\\/)www.*(?!/).tut.by*');
     for (let i=0; i<link.length; i++) {
-        if (visited.indexOf(link[i]) == -1 && template.test(link[i])) {
-            visited.push(link[i])
+        if (!visited.has(link[i]) && template.test(link[i])) {
+            visited.set(link[i])
             URL.push(link[i])
-
         }
     }
     fs.appendFileSync('./visited.json', JSON.stringify(url[0]));
@@ -41,11 +40,8 @@ async function parse(url) {
         fs.appendFileSync('./crashed.json', "\n")
         URL.shift()
     }
-
     while (URL.length !== 0) {
         await parse(URL[0])
     }
-
 }
-
 parse(URL);
